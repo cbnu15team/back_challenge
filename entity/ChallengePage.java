@@ -18,18 +18,18 @@ public class ChallengePage {
     private Integer pageId;
 
     @ManyToOne
-    @JoinColumn(name = "challenge_id", nullable = false)
+    @JoinColumn(name = "challenge_id", nullable = false) 
     private ChallengeBoard challengeBoard;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false) // 작성 시간
     private LocalDateTime createdAt;
 
-    @Transient
-    private String title;
+    @Transient    
+    private String title;    // 제목 
 
     @Transient
-    private String author;
+    private String author;    // 작성자
 
     @Transient
-    private Integer views;
+    private Integer views;    // 조회수
 }
