@@ -18,13 +18,13 @@ public class ChallengePage {
     private Integer pageId;
 
     @ManyToOne
-    @JoinColumn(name = "challenge_id", nullable = false) // ChallengeBoard와 연관
+    @JoinColumn(name = "challenge_id", nullable = false)
     private ChallengeBoard challengeBoard;
 
-    @Column(name = "created_at", nullable = false) // ChallengePage 생성 시간
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Transient // DB에 저장하지 않고 ChallengeBoard의 데이터를 가져옴
+    @Transient
     private String title;
 
     @Transient
