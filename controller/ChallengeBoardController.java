@@ -1,7 +1,11 @@
 package com.example.joinup.challengeboard.controller;
 
-import com.example.joinup.challengeboard.entity.ChallengeBoard;
+import com.example.joinup.challengeboard.dto.ChallengeBoardResponse;
+import com.example.joinup.challengeboard.entity.ChallengePage;
 import com.example.joinup.challengeboard.service.ChallengeBoardService;
+import com.example.joinup.challengeboard.service.ChallengePageService;
+import com.example.joinup.user.entity.User;
+import com.example.joinup.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,53 +16,52 @@ import java.util.List;
 public class ChallengeBoardController {
 
     private final ChallengeBoardService challengeBoardService;
+    private final ChallengePageService challengePageService;
+    private final UserService userService;
 
-    public ChallengeBoardController(ChallengeBoardService challengeBoardService) {
+    public ChallengeBoardController(
+            ChallengeBoardService challengeBoardService,
+            ChallengePageService challengePageService,
+            UserService userService
+    ) {
         this.challengeBoardService = challengeBoardService;
+        this.challengePageService = challengePageService;
+        this.userService = userService;
     }
 
     @GetMapping
-    public List<ChallengeBoard> getAllBoards() {
-        return challengeBoardService.getAllBoards();
+    public ResponseEntity<List<ChallengeBoardResponse>> getAllPages() {
+        List<ChallengeBoardResponse> pages = challengeBoardService.getAllPages();
+        return ResponseEntity.ok(pages);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getBoardById(@PathVariable Integer id) {
-        try {
-            ChallengeBoard board = challengeBoardService.getBoardById(id);
-            return ResponseEntity.ok(board);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @GetMapping("/{boardType}")
+    public ResponseEntity<List<ChallengeBoardResponse>> getPagesByBoardType(@PathVariable String boardType) {
+        List<ChallengeBoardResponse> pages = challengeBoardService.getPagesByBoardType(boardType);
+        return ResponseEntity.ok(pages);
     }
 
     @PostMapping
-    public ResponseEntity<?> createBoard(@RequestBody ChallengeBoard board) {
+    public ResponseEntity<?> createBoard(@RequestBody ChallengePage page) {
         try {
-            ChallengeBoard createdBoard = challengeBoardService.createBoard(board);
-            return ResponseEntity.ok(createdBoard);
+            // User의 userId 확인
+            if (page.getUser() == null || page.getUser().getUserId() == null) {
+                throw new RuntimeException("유저 userId는 필수입니다.");
+            }
+
+            // userId로 User 조회
+            User user = userService.findByUserId(page.getUser().getUserId())
+                    .orElseThrow(() -> new RuntimeException("해당 userId의 유저를 찾을 수 없습니다."));
+
+            // ChallengePage에 User 설정
+            page.setUser(user);
+
+            // ChallengePage 저장
+            ChallengePage createdPage = challengePageService.createPage(page);
+
+            return ResponseEntity.ok(new ChallengeBoardResponse(createdPage));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("게시글 생성 실패: " + e.getMessage());
-        }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateBoard(@PathVariable Integer id, @RequestBody ChallengeBoard updatedBoard) {
-        try {
-            ChallengeBoard board = challengeBoardService.updateBoard(id, updatedBoard);
-            return ResponseEntity.ok(board);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("게시글 수정 실패: " + e.getMessage());
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBoardById(@PathVariable Integer id) {
-        try {
-            challengeBoardService.deleteBoardById(id);
-            return ResponseEntity.ok("게시글이 성공적으로 삭제되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("게시글 삭제 실패: " + e.getMessage());
         }
     }
 }
